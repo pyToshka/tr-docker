@@ -1,0 +1,4 @@
+.idea
+containers/*
+/mysql-datadir/*
+/puppet/modules/php-fpm/files/dead.letter

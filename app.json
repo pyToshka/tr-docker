@@ -1,0 +1,31 @@
+{
+    "builders":[{
+        "type": "docker",
+        "image": "ubuntu",
+        "export_path": "containers/php-fpm.tar",
+        "run_command": [
+          "-d",
+          "-i",
+          "-t",
+          "--name",
+          "php-fpm",
+          "{{.Image}}",
+          "/bin/bash"
+      ]
+
+    }],
+    "provisioners":[
+      {
+          "type": "shell",
+          "inline": ["apt-get -y update; apt-get install -y cron curl puppet-common sendmail sudo"]
+      },
+ {
+      "type": "puppet-masterless",
+      "manifest_file": "puppet/environments/packer/manifests/default.pp",
+      "manifest_dir": "puppet/environments",
+      "module_paths": ["puppet/modules"],
+      "execute_command": "{{.FacterVars}} sudo puppet apply --detailed-exitcodes --modulepath='{{.ModulePath}}' {{.ManifestFile}}"
+    }
+    ]
+
+}

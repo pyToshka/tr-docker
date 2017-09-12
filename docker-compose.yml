@@ -1,0 +1,60 @@
+version: '3'
+services:
+  nginx-app:
+    build: .
+    image: "php-fpm"
+    tty: true
+    expose:
+      - 8080
+    volumes:
+      - "./puppet/modules/php-fpm/files:/var/www"
+    networks:
+      - default
+  redis:
+    image: "redis"
+    networks:
+      - default
+  ftp:
+    image: "panubo/vsftpd"
+    networks:
+      - default
+    volumes:
+      - "./puppet/modules/php-fpm/files:/var/www"
+    ports:
+      - "21:21"
+      - "20:20"
+    environment:
+      FTP_USER: "tr"
+      FTP_PASSWORD: "tr"
+      FTP_USERS_ROOT: "/var/www"
+  haproxy:
+    image: eeacms/haproxy
+    depends_on:
+      - nginx-app
+    ports:
+      - "80:5000"
+      - "1936:1936"
+    environment:
+      BACKENDS: "nginx-app"
+      DNS_ENABLED: "true"
+      BACKENDS_PORT: "8080"
+      TIMEOUT_CLIENT: 50m
+      TIMEOUT_SERVER: 50m
+      TIMEOUT_CONNECT: 50m
+
+  mysql:
+    image: mysql
+    container_name: tr-mysql
+    ports:
+      - "6603:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: "tr"
+      MYSQL_DATABASE: "tr"
+      MYSQL_USER: "tr"
+      MYSQL_PASSWORD: "tr"
+    command: --init-file /docker-entrypoint-initdb.d/create_db.sql
+    networks:
+      - default
+    volumes:
+      - "./mysql-datadir:/var/lib/mysql"
+      - "./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d"
